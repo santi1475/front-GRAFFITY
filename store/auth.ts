@@ -11,6 +11,7 @@ interface AuthState {
   getUser: () => User | null;
   getToken: () => string | null;
   isPermitedRoute: (permission: string) => boolean;
+  updateUser: (data: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -57,6 +58,13 @@ export const useAuthStore = create<AuthState>()(
           return permissions?.includes(permission) || permission === 'all';
         }
         return true;
+      },
+
+      updateUser: (data: Partial<User>) => {
+        const currentUser = get().user;
+        if (currentUser) {
+          set({ user: { ...currentUser, ...data } });
+        }
       },
     }),
     {

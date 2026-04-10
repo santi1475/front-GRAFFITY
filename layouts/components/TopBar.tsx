@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 
 import { User as UserType } from '@/types/auth';
@@ -123,6 +124,13 @@ export default function Topbar({
         if (hour < 12) return 'Buenos días';
         if (hour < 18) return 'Buenas tardes';
         return 'Buenas noches';
+    };
+
+    const getAvatarUrl = (path: string | null | undefined) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        return `${baseUrl}${path}`;
     };
 
     if (!mounted) {
@@ -351,29 +359,27 @@ export default function Topbar({
                             {/* User Profile */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="relative">
-                                        <Image
-                                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=james"
-                                            alt="User"
-                                            width={32}
-                                            height={32}
-                                            className="h-8 w-8 rounded-full"
-                                        />
+                                    <Button variant="ghost" size="icon" className="relative p-0 h-8 w-8 rounded-full overflow-hidden">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={getAvatarUrl(user?.avatar) || ''} alt={user?.name || 'User'} />
+                                            <AvatarFallback className="bg-primary/10 text-primary">
+                                                {user?.name?.charAt(0) || <User className="h-4 w-4" />}
+                                            </AvatarFallback>
+                                        </Avatar>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
                                     {user && (
                                         <>
-                                            <div className="flex gap-3 px-4 py-3 bg-gray-100 dark:bg-slate-900">
-                                                <Image
-                                                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=james"
-                                                    alt="User"
-                                                    width={40}
-                                                    height={40}
-                                                    className="h-10 w-10 rounded-full"
-                                                />
+                                            <div className="flex gap-3 px-4 py-3 bg-gray-100 dark:bg-slate-900 items-center">
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarImage src={getAvatarUrl(user.avatar) || ''} alt={user.name} />
+                                                    <AvatarFallback className="bg-white dark:bg-slate-800 text-primary">
+                                                        {user.name.charAt(0)}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                                 <div className="flex-1 min-w-0">
-                                                    <h6 className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    <h6 className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                                         {user.name} {user.surname}
                                                     </h6>
                                                     <p className="text-xs text-gray-600 dark:text-gray-400 truncate">

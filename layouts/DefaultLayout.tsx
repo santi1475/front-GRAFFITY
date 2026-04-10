@@ -27,25 +27,18 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
     const { user, removeSession } = useAuthStore()
     const { theme, setTheme, resolvedTheme } = useTheme()
 
-    // SESSION GUARD: Verificación periódica del token (DevTools check)
     React.useEffect(() => {
         const checkAuth = () => {
             const hasCookie = document.cookie.includes('token=')
             const hasLocal = localStorage.getItem('token')
-            
-            // Si falta cualquiera de los dos (cookie o local), cerramos sesión por seguridad
             if ((!hasCookie || !hasLocal) && user) {
                 removeSession()
                 router.push('/login')
             }
         }
-
-        // Ejecutar inmediatamente al montar
         checkAuth()
-
         const interval = setInterval(checkAuth, 2000)
         window.addEventListener('storage', checkAuth)
-
         return () => {
             clearInterval(interval)
             window.removeEventListener('storage', checkAuth)
@@ -57,38 +50,31 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
         router.push('/login')
     }
 
-    // Generar breadcrumbs dinámicos basados en la ruta actual
     const generateBreadcrumbs = () => {
         const paths = pathname.split('/').filter(Boolean)
         return paths.map((path, index) => {
             const href = '/' + paths.slice(0, index + 1).join('/')
             const isLast = index === paths.length - 1
             const label = path.charAt(0).toUpperCase() + path.slice(1)
-
-            return {
-                href,
-                label,
-                isLast
-            }
+            return { href, label, isLast }
         })
     }
 
     const breadcrumbs = generateBreadcrumbs()
 
     return (
+        // h-screen + overflow-hidden en el provider evita el scroll doble
         <SidebarProvider
-            style={
-                {
-                    "--sidebar-width": "350px",
-                } as React.CSSProperties
-            }
+            className="h-screen overflow-hidden"
+            style={{ "--sidebar-width": "350px" } as React.CSSProperties}
         >
             <AppSidebar />
-            <SidebarInset>
-                {/* Header simplificado y bien estructurado */}
-                <div className="sticky top-0 z-10 w-full border-b bg-background">
+
+            {/* SidebarInset ocupa el resto del ancho y maneja su propio scroll */}
+            <SidebarInset className="flex flex-col min-h-0">
+                {/* Header fijo */}
+                <div className="sticky top-0 z-10 w-full border-b bg-background shrink-0">
                     <div className="flex h-16 items-center justify-between px-4">
-                        {/* Sección izquierda: SidebarTrigger y Breadcrumb */}
                         <div className="flex items-center gap-2">
                             <SidebarTrigger className="-ml-1" />
                             <Separator orientation="vertical" className="h-4" />
@@ -102,7 +88,7 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
                                             <BreadcrumbSeparator />
                                         )}
                                         {breadcrumbs.map((crumb, index) => {
-                                            if (crumb.href === '/') return null;
+                                            if (crumb.href === '/') return null
                                             return (
                                                 <React.Fragment key={crumb.href}>
                                                     <BreadcrumbItem>
@@ -124,18 +110,16 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
                                 </Breadcrumb>
                             </div>
                         </div>
-
-                        {/* Sección derecha: TopBar */}
-                        <TopBar 
-                            user={user} 
-                            theme={theme} 
+                        <TopBar
+                            user={user}
+                            theme={theme}
                             onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                             onLogout={handleLogout}
                         />
                     </div>
                 </div>
 
-                {/* Contenido principal */}
+                {/* Contenido — scrollable, ocupa el resto de la altura */}
                 <div className="flex-1 overflow-auto">
                     <div className="p-4">
                         {children}

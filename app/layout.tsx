@@ -4,7 +4,7 @@ import "./globals.css"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/layouts/components/theme-provider"
-
+import { QueryProvider } from "@/components/query-provider"
 
 const instrumentSans = Instrument_Sans({subsets:['latin'],variable:'--font-sans'})
 
@@ -32,7 +32,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <QueryProvider>
+              {children}
+            </QueryProvider>
           </ThemeProvider>
         </TooltipProvider>
         </body>

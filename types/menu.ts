@@ -18,8 +18,12 @@ export type MenuItemType = {
   children?: MenuItemType[];
   permission?: string;
   permissions?: string[];
+  section?: string;
+  sectionLabel?: string;
+  sectionIcon?: LucideIcon;
+  sectionPermissions?: string[];
 };
- 
+
 export type SubMenuProps = {
   item: MenuItemType;
   linkClassName?: string;

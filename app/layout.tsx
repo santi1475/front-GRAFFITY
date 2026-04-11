@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/layouts/components/theme-provider"
 import { QueryProvider } from "@/components/query-provider"
+import { Toaster } from "@/components/ui/sonner"
 
 const instrumentSans = Instrument_Sans({subsets:['latin'],variable:'--font-sans'})
 
@@ -37,7 +38,8 @@ export default function RootLayout({
             </QueryProvider>
           </ThemeProvider>
         </TooltipProvider>
-        </body>
+        <Toaster />
+      </body>
     </html>
   )
 }

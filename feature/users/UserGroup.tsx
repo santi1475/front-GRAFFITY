@@ -28,9 +28,9 @@ const formSchema = z.object({
   type_document: z.string().optional(),
   n_document: z.string().optional(),
   phone: z.string().optional(),
-  gender: z.preprocess((val) => Number(val), z.number()).optional(),
-  role_id: z.preprocess((val) => Number(val), z.number().min(1, "Seleccione un rol")),
-  is_active: z.boolean().default(true),
+  gender: z.number().optional(),
+  role_id: z.number().min(1, "Seleccione un rol"),
+  is_active: z.boolean(),
   avatar: z
     .any()
     .optional()
@@ -136,8 +136,8 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    saveMutation.mutate(data);
+  const onSubmit = (data: any) => {
+    saveMutation.mutate(data as FormValues);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {

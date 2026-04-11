@@ -13,6 +13,7 @@ import {
   FileText,
   Plus,
   List,
+  LayoutGrid,
 } from "lucide-react";
 import type { MenuItemType } from "@/types/menu";
 
@@ -53,33 +54,21 @@ export const menu_item: MenuItemType[] = [
 
   // ── COMERCIAL ────────────────────────────────────────
   {
-    key: "categories",
-    icon: Layers,
-    label: "Categorías",
-    route: { name: "categories.index" },
-    parentKey: "categories",
-    permission: "list_categorie",
-    section: "comercial",
-    sectionLabel: "Comercial",
-    sectionIcon: ShoppingCart,
-    sectionPermissions: [
-      "list_categorie",
-      "list_product",
-      "register_product",
-      "list_client",
-      "register_sale",
-      "list_sale",
-      "register_guia_remision",
-      "list_guia_remision",
-    ],
-  },
-  {
-    key: "register_brand",
+    key: "catalog_brands",
     icon: Tag,
     label: "Marcas",
-    route: { name: "brands.index" },
+    route: { name: "catalog.brands" },
     parentKey: "products",
-    permission: "register_product",
+    permission: "view_brand",
+    section: "comercial",
+  },
+  {
+    key: "catalog_categories",
+    icon: LayoutGrid,
+    label: "Categorías",
+    route: { name: "catalog.categories" },
+    parentKey: "products",
+    permission: "view_category",
     section: "comercial",
   },
   {

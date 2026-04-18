@@ -4,9 +4,9 @@ import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import type { AxiosError } from "axios"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { brandService } from "@/services/brand"
 import { toast } from "sonner"
@@ -53,7 +53,6 @@ interface BrandFormProps {
 }
 
 export function BrandForm({ brand, open, onOpenChange, onSuccess }: BrandFormProps) {
-  const router = useRouter()
   const queryClient = useQueryClient()
   const isEdit = !!brand
 
@@ -85,7 +84,7 @@ export function BrandForm({ brand, open, onOpenChange, onSuccess }: BrandFormPro
 
   const saveMutation = useMutation({
     mutationFn: (values: BrandFormValues) => {
-      const payload: any = {
+      const payload: Record<string, string | File | undefined> = {
         name: values.name,
         icon_name: values.icon_name,
         is_active: values.is_active ? "True" : "False",
@@ -106,8 +105,9 @@ export function BrandForm({ brand, open, onOpenChange, onSuccess }: BrandFormPro
       onOpenChange(false)
       onSuccess?.()
     },
-    onError: (error: any) => {
-      const msg = error?.response?.data?.message || "Ocurrió un error al guardar la marca"
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<{ message?: string }>
+      const msg = axiosError.response?.data?.message || "Ocurrió un error al guardar la marca"
       toast.error(msg)
     },
   })
@@ -127,7 +127,7 @@ export function BrandForm({ brand, open, onOpenChange, onSuccess }: BrandFormPro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col p-0 gap-0 w-full sm:max-w-[520px] h-full max-h-screen">
+      <SheetContent className="flex h-full max-h-screen w-full flex-col gap-0 p-0 sm:max-w-130">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/60 shrink-0">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 rounded-lg bg-primary/10 p-2 shrink-0">

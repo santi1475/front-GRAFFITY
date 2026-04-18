@@ -127,7 +127,7 @@ export function CategoryForm({ category, open, onOpenChange, onSuccess }: Catego
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col p-0 gap-0 w-full sm:max-w-[520px] h-full max-h-screen">
+      <SheetContent className="flex h-full max-h-screen w-full flex-col gap-0 p-0 sm:max-w-130">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/60 shrink-0">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 rounded-lg bg-primary/10 p-2 shrink-0">

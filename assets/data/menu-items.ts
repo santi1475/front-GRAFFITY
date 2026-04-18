@@ -14,8 +14,8 @@ import {
   Plus,
   List,
   LayoutGrid,
-} from "lucide-react";
-import type { MenuItemType } from "@/types/menu";
+} from "lucide-react"
+import type { MenuItemType } from "@/types/menu"
 
 export const menu_item: MenuItemType[] = [
   // ── MAIN ─────────────────────────────────────────────
@@ -163,4 +163,4 @@ export const menu_item: MenuItemType[] = [
     permission: "company",
     section: "config",
   },
-];
+]

@@ -54,8 +54,19 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
   const queryClient = useQueryClient();
   const { user: authUser, updateUser } = useAuthStore();
   const [preview, setPreview] = useState<string | null>(null);
+  const defaultAvatarSrc = user?.avatar
+    ? (user.avatar.includes("http") ? user.avatar : `http://localhost:8000${user.avatar}`)
+    : null;
+  const previewSrc = preview ?? defaultAvatarSrc;
 
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
+  const handleSheetOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setPreview(null);
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -88,15 +99,6 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
           is_active: user.is_active,
           avatar: undefined,
         });
-        
-        // Si hay avatar y no es nulo, seteamos el preview desde la tupla MEDIA_URL
-        if (user.avatar) {
-            // asumiendo que backend manda el url completo o un path relativo como /media/images/avatar.png
-            setPreview(user.avatar.includes('http') ? user.avatar : `http://localhost:8000${user.avatar}`);
-        } else {
-            setPreview(null);
-        }
-
       } else {
         reset({
           name: "",
@@ -111,7 +113,6 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
           is_active: true,
           avatar: undefined,
         });
-        setPreview(null);
       }
     }
   }, [open, user, reset, roles]);
@@ -124,20 +125,21 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
         }
         return userService.saveUser(values, user?.id);
     },
-    onSuccess: (response: any) => {
+    onSuccess: (response: unknown) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       
       // Si el usuario editado es el mismo que está logueado, actualizamos el store global
-      if (user && authUser && user.id === authUser.id && response.user) {
-          updateUser(response.user);
+      const updatedUser = (response as { user?: unknown }).user;
+      if (user && authUser && user.id === authUser.id && updatedUser) {
+          updateUser(updatedUser as Parameters<typeof updateUser>[0]);
       }
 
-      onOpenChange(false);
+      handleSheetOpenChange(false);
     },
   });
 
-  const onSubmit = (data: any) => {
-    saveMutation.mutate(data as FormValues);
+  const onSubmit = (data: FormValues) => {
+    saveMutation.mutate(data);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,8 +152,8 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex flex-col p-0 gap-0 w-full sm:max-w-[520px] h-full max-h-screen">
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
+      <SheetContent className="flex h-full max-h-screen w-full flex-col gap-0 p-0 sm:max-w-130">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border/60 shrink-0">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 rounded-lg bg-primary/10 p-2 shrink-0">
@@ -175,8 +177,8 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
                 {/* Avatar Preview */}
                 <div className="flex flex-col items-center justify-center space-y-3">
                     <Avatar className="h-24 w-24 border">
-                        {preview ? <AvatarImage src={preview} alt="Preview" className="object-cover" /> : null}
-                        <AvatarFallback className="bg-muted text-xl">{watch("name")?.charAt(0) || "U"}</AvatarFallback>
+                      {previewSrc ? <AvatarImage src={previewSrc} alt="Preview" className="object-cover" /> : null}
+                        <AvatarFallback className="bg-muted text-xl">{user?.name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                     
                     <div className="text-center">
@@ -266,7 +268,7 @@ export function UserFormSheet({ open, onOpenChange, user, roles }: UserFormSheet
         </div>
 
         <SheetFooter className="shrink-0 px-6 py-4 border-t border-border/60 bg-muted/20 flex flex-row gap-2 sm:justify-end">
-          <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleSheetOpenChange(false)}>
             Cancelar
           </Button>
           <Button type="submit" form="user-form" disabled={saveMutation.isPending} className="flex-1 sm:flex-none">

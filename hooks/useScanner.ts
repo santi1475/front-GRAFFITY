@@ -4,13 +4,14 @@ import type { Product } from "@/types/product"
 interface ScannerWebSocketPayload {
   event: string
   barcode: string
-  productData: Product
+  productData: Product | null
+  is_new?: boolean
 }
 
 export function useScanner(channelUuid: string) {
-  const [lastScannedProduct, setLastScannedProduct] = useState<Product | null>(
-    null
-  )
+  const [lastScannedProduct, setLastScannedProduct] = useState<Product | null>(null)
+  const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null)
+  const [isNewScanned, setIsNewScanned] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
@@ -37,8 +38,10 @@ export function useScanner(channelUuid: string) {
     ws.onmessage = (event) => {
       try {
         const payload: ScannerWebSocketPayload = JSON.parse(event.data)
-        if (payload.event === "product.scanned" && payload.productData) {
-          setLastScannedProduct(payload.productData)
+        if (payload.event === "product.scanned") {
+          setLastScannedProduct(payload.productData || null)
+          setLastScannedBarcode(payload.barcode)
+          setIsNewScanned(!!payload.is_new)
         }
       } catch (err) {
         console.error("Error parsing scanner websocket message", err)
@@ -76,10 +79,14 @@ export function useScanner(channelUuid: string) {
   // Expose a way to clear the last scanned product if needed
   const clearLastScanned = useCallback(() => {
     setLastScannedProduct(null)
+    setLastScannedBarcode(null)
+    setIsNewScanned(false)
   }, [])
 
   return {
     lastScannedProduct,
+    lastScannedBarcode,
+    isNewScanned,
     isConnected,
     clearLastScanned,
   }

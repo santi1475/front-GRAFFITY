@@ -8,6 +8,7 @@ export interface Product {
   unidad_medida: string;
   category_id: number | null;
   brand_id: number | null;
+  stock: number;
   is_deleted: boolean;
 }
 

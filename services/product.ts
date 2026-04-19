@@ -31,6 +31,13 @@ export const productService = {
     return data;
   },
 
+  updateProduct: async (id: number, formData: FormData): Promise<ProductMutationResponse> => {
+    const { data } = await api.put<ProductMutationResponse>(`/api/products/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
   deleteProduct: async (id: number): Promise<ProductMutationResponse> => {
     const { data } = await api.delete<ProductMutationResponse>(`/api/products/${id}`);
     return data;

@@ -15,7 +15,7 @@ export default function ProductRegisterPage() {
             <Skeleton className="h-[400px] w-full" />
         </div>
     }>
-      <ProductsFeature initialOpen={true} />
+      <ProductsFeature />
     </Suspense>
   );
 }

@@ -37,6 +37,7 @@ const productSchema = z.object({
   brand_id: z.string().min(1, "Seleccione una marca"),
   state: z.boolean(),
   unidad_medida: z.string(),
+  stock: z.union([z.string(), z.number()]).refine((val) => Number(val) >= 0, "El stock no puede ser negativo"),
 })
 
 type ProductFormValues = z.infer<typeof productSchema>
@@ -55,7 +56,13 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
   const [channelUuid] = React.useState(() => crypto.randomUUID())
   const [previewImage, setPreviewImage] = React.useState<string | null>(null)
   
-  const { isConnected, lastScannedProduct, clearLastScanned } = useScanner(channelUuid)
+  const { 
+    isConnected, 
+    lastScannedProduct, 
+    lastScannedBarcode,
+    isNewScanned,
+    clearLastScanned 
+  } = useScanner(channelUuid)
 
   const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -67,6 +74,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
       brand_id: "",
       state: true,
       unidad_medida: "Unidad",
+      stock: 0,
     },
   })
 
@@ -82,6 +90,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
           brand_id: String(product.brand_id || ""),
           state: !!product.state,
           unidad_medida: product.unidad_medida || "Unidad",
+          stock: product.stock || 0,
         })
         setPreviewImage(product.image ? `${process.env.NEXT_PUBLIC_API_URL}${product.image}` : null)
       } else {
@@ -93,6 +102,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
           brand_id: "",
           state: true,
           unidad_medida: "Unidad",
+          stock: 0,
         })
         setPreviewImage(null)
       }
@@ -110,16 +120,19 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
       const currentTime = Date.now()
       
       if (e.key === "Enter") {
-        if (buffer.length > 3) {
-          toast.info(`Escanéo detectado: ${buffer}`)
+        if (buffer.length > 5) {
+          toast.info(`Escaneo físico detectado: ${buffer}`)
           productService.scanProduct({ barcode: buffer, channel_uuid: channelUuid })
         }
         buffer = ""
         return
       }
 
+      // Evitar teclas de control
       if (e.key.length === 1) {
-        if (currentTime - lastKeyTime > 50) {
+        // Los lectores típicamente mandan cada tecla muy rápido (usualmente < 15ms)
+        // Damos maximo 30ms para considerarlo parte del mismo escaneo automático.
+        if (currentTime - lastKeyTime > 30) {
           buffer = e.key
         } else {
           buffer += e.key
@@ -134,6 +147,17 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
 
   // Manejar el resultado del escaneo (vía WebSocket)
   React.useEffect(() => {
+    // Escenario 1: Código no registrado (Nuevo)
+    if (isNewScanned && lastScannedBarcode) {
+      toast.info(`Código nuevo detectado: ${lastScannedBarcode}`)
+      if (!isEdit) {
+        setValue("sku", lastScannedBarcode, { shouldValidate: true })
+      }
+      clearLastScanned()
+      return
+    }
+
+    // Escenario 2: Producto ya registrado
     if (lastScannedProduct) {
       if (isEdit && lastScannedProduct.id === product?.id) {
           clearLastScanned()
@@ -146,7 +170,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
       }
       clearLastScanned()
     }
-  }, [lastScannedProduct, isEdit, product, clearLastScanned, setValue])
+  }, [lastScannedProduct, isNewScanned, lastScannedBarcode, isEdit, product, clearLastScanned, setValue])
 
   const onSubmit = async (values: ProductFormValues) => {
     try {
@@ -159,6 +183,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
       formData.append("brand_id", values.brand_id)
       formData.append("state", values.state ? "1" : "0")
       formData.append("unidad_medida", values.unidad_medida)
+      formData.append("stock", String(values.stock))
 
       if (!isEdit && values.sku) {
         formData.append("sku", values.sku)
@@ -170,10 +195,10 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
       }
 
       if (isEdit && product) {
-        formData.append("id", String(product.id))
+        await productService.updateProduct(product.id, formData)
+      } else {
+        await productService.createProduct(formData)
       }
-      
-      await productService.createProduct(formData)
 
       toast.success(isEdit ? "Producto actualizado" : "Producto registrado")
       onSuccess()
@@ -213,7 +238,7 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
                 </SheetDescription>
               </div>
             </div>
-            <ScannerStatus isConnected={isConnected} />
+            <ScannerStatus isConnected={isConnected} channelUuid={channelUuid} />
           </div>
         </SheetHeader>
 
@@ -341,6 +366,24 @@ export function ProductForm({ open, onOpenChange, product, onSuccess, config }: 
                   )}
                 />
                 {errors.brand_id && <p className="text-xs text-destructive">{errors.brand_id.message}</p>}
+              </div>
+
+              {/* Stock */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-foreground">Stock *</label>
+                <Controller
+                  name="stock"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      {...field}
+                      className={errors.stock ? "border-destructive bg-white/5" : "bg-white/5 border-white/10"}
+                    />
+                  )}
+                />
+                {errors.stock && <p className="text-xs text-destructive">{errors.stock.message}</p>}
               </div>
 
               {/* Estado */}

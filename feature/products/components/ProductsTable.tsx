@@ -59,13 +59,13 @@ export function ProductsTable({
     },
   })
 
-  // Note: If toggleStatus is needed for products, implement it here similar to Brands
+  // Update product state via toggle
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, state }: { id: number; state: boolean }) => {
         const formData = new FormData()
         formData.append("id", String(id))
         formData.append("state", state ? "1" : "0")
-        return productService.createProduct(formData)
+        return productService.updateProduct(id, formData)
     },
     onSuccess: () => {
         toast.success("Estado actualizado")
